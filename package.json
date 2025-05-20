@@ -1,0 +1,12 @@
+{
+  "name": "miview-dashboard",
+  "version": "1.0.0",
+  "description": "MiView Dashboard - Market Data & Trading Insights",
+  "private": true,
+  "scripts": {
+    "start": "serve templates"
+  },
+  "dependencies": {
+    "serve": "^14.2.1"
+  }
+} 

@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiView Dashboard - Market Data & Trading Insights</title>
+    <meta name="description" content="Real-time market data, oil prices and trading insights" />
+    <meta name="author" content="MiView Analytics" />
+    
+    <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
+    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    
+    <!-- Plotly for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    
+    <style>
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f9fafb;
+        color: #1f2937;
+      }
+      
+      * {
+        box-sizing: border-box;
+      }
+      
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+      
+      /* Header Styles */
+      .header {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 1.5rem;
+      }
+      
+      .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      
+      .header h1 {
+        font-size: 1.875rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .header p {
+        color: #4b5563;
+        margin-top: 0.5rem;
+      }
+      
+      .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .live-badge {
+        display: inline-flex;
+        align-items: center;
+        background-color: #ecfdf5;
+        color: #065f46;
+        font-size: 0.75rem;
+        font-weight: 500;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        margin-left: 0.5rem;
+      }
+      
+      .pulse-dot {
+        height: 0.5rem;
+        width: 0.5rem;
+        background-color: #10b981;
+        border-radius: 50%;
+        margin-right: 0.25rem;
+        position: relative;
+      }
+      
+      .pulse-dot::after {
+        content: '';
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        top: 0;
+        left: 0;
+        background-color: #10b981;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+        z-index: -1;
+      }
+      
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(3);
+          opacity: 0;
+        }
+      }
+      
+      .date-display {
+        font-size: 0.875rem;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+      }
+      
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        background-color: white;
+        color: #1f2937;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .button:hover {
+        background-color: #f9fafb;
+      }
+      
+      .button-primary {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+      }
+      
+      .button-primary:hover {
+        background-color: #1d4ed8;
+      }
+      
+      .button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      
+      /* Tab Navigation */
+      .tabs {
+        margin-bottom: 1.5rem;
+      }
+      
+      .tab-list {
+        display: flex;
+        background-color: #f3f4f6;
+        border-radius: 0.375rem;
+        padding: 0.25rem;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+      }
+      
+      .tab-button {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        padding: 0.625rem 1rem;
+        border-radius: 0.25rem;
+        border: none;
+        background: none;
+        color: #6b7280;
+        cursor: pointer;
+        min-width: max-content;
+      }
+      
+      .tab-button.active {
+        background-color: white;
+        color: #1f2937;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      
+      .tab-content {
+        display: none;
+      }
+      
+      .tab-content.active {
+        display: block;
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      
+      /* Cards */
+      .grid {
+        display: grid;
+        gap: 1rem;
+      }
+      
+      .card {
+        background-color: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      
+      .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      }
+      
+      .card-header {
+        padding: 1rem 1.5rem;
+        padding-bottom: 0.5rem;
+      }
+      
+      .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      
+      .card-content {
+        padding: 1.5rem;
+        padding-top: 0.5rem;
+      }
+      
+      /* Stats Grid */
+      .stats-grid {
+        grid-template-columns: repeat(1, 1fr);
+      }
+      
+      .stat-card {
+        padding: 1rem;
+        transition: all 0.3s ease;
+      }
+      
+      .stat-card small {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #6b7280;
+        text-transform: uppercase;
+      }
+      
+      .stat-price {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0.5rem 0;
+        display: flex;
+        align-items: baseline;
+      }
+      
+      .stat-unit {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-left: 0.25rem;
+      }
+      
+      .stat-change {
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      
+      .up {
+        color: #16a34a;
+      }
+      
+      .down {
+        color: #dc2626;
+      }
+      
+      /* Chart Container */
+      .chart-container {
+        width: 100%;
+        height: 400px;
+        position: relative;
+      }
+      
+      /* Chat Interface */
+      .chat-container {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        background-color: #f9fafb;
+        height: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      
+      .chat-message {
+        margin-bottom: 1rem;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      
+      .chat-role {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+      
+      .chat-content {
+        border-left: 2px solid #d1d5db;
+        padding-left: 0.75rem;
+      }
+      
+      .chat-input {
+        display: flex;
+        gap: 0.5rem;
+      }
+      
+      .input {
+        flex: 1;
+        padding: 0.625rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+      }
+      
+      .input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+      
+      /* Loading Spinner */
+      .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100px;
+      }
+      
+      .loading-spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        border-top: 3px solid #2563eb;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Analysis Mini Cards */
+      .mini-card {
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+      }
+      
+      .mini-card h4 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+      }
+      
+      .mini-card p {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      
+      .mini-card small {
+        font-size: 0.75rem;
+      }
+      
+      .blue-card {
+        background-color: #eff6ff;
+      }
+      
+      .blue-card h4 {
+        color: #1e40af;
+      }
+      
+      .green-card {
+        background-color: #ecfdf5;
+      }
+      
+      .green-card h4 {
+        color: #065f46;
+      }
+      
+      .red-card {
+        background-color: #fef2f2;
+      }
+      
+      .red-card h4 {
+        color: #991b1b;
+      }
+      
+      .purple-card {
+        background-color: #f5f3ff;
+      }
+      
+      .purple-card h4 {
+        color: #5b21b6;
+      }
+      
+      /* Animations */
+      .animate-fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      
+      /* Separators */
+      .separator {
+        height: 1px;
+        background-color: #e5e7eb;
+        margin: 1.5rem 0;
+      }
+      
+      /* Responsive */
+      @media (min-width: 768px) {
+        .stats-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+        
+        .mini-stats-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      
+      @media (min-width: 640px) {
+        .mini-stats-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header animate-fade-in">
+        <div class="header-row">
+          <div>
+            <h1>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              MiView Dashboard
+              <span class="live-badge">
+                <span class="pulse-dot"></span>
+                Live
+              </span>
+            </h1>
+            <p>Providing precise commodity prices and market data insights</p>
+          </div>
+          <div>
+            <div class="date-display">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon" style="margin-right: 0.5rem;">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span id="current-date">Loading...</span>
+            </div>
+            <button id="refresh-btn" class="button" style="margin-top: 0.5rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Loading State -->
+      <div id="loading-container" class="loading-container">
+        <div class="loading-spinner"></div>
+      </div>
+      
+      <!-- Main Dashboard -->
+      <div id="dashboard-content" style="display: none;">
+        <!-- Tab Navigation -->
+        <div class="tabs">
+          <div class="tab-list">
+            <button class="tab-button active" data-tab="overview">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="3" y1="9" x2="21" y2="9"/>
+                <line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+              Overview
+            </button>
+            <button class="tab-button" data-tab="analysis">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <path d="M2 20h20"/>
+                <path d="M5 20V8.2a1.2 1.2 0 0 1 2.4 0v1a1.2 1.2 0 0 0 2.4 0V4.2a1.2 1.2 0 0 1 2.4 0v5a1.2 1.2 0 0 0 2.4 0V2.2a1.2 1.2 0 0 1 2.4 0V20"/>
+              </svg>
+              Analysis
+            </button>
+            <button class="tab-button" data-tab="chat">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.3-4.3"/>
+              </svg>
+              Chat Assistant
+            </button>
+          </div>
+          
+          <!-- Tab Content: Overview -->
+          <div id="overview-tab" class="tab-content active animate-fade-in">
+            <!-- Stats Cards -->
+            <div class="stats-grid grid">
+              <div id="current-price-card" class="card stat-card">
+                <small>CURRENT PRICE</small>
+                <div class="stat-price">
+                  <span id="current-price">$0.00</span>
+                  <span class="stat-unit">USD/bbl</span>
+                </div>
+                <div id="price-change" class="stat-change">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+                    <polyline points="16 7 22 7 22 13"/>
+                  </svg>
+                  <span>0.00%</span>
+                  <span style="color: #6b7280; margin-left: 0.25rem">30-day change</span>
+                </div>
+              </div>
+              
+              <div class="card stat-card">
+                <small>PRICE RANGE</small>
+                <div class="stat-price">
+                  <span id="price-range">$0.00 - $0.00</span>
+                </div>
+                <div class="stat-change" style="color: #6b7280;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span>30-day range</span>
+                </div>
+              </div>
+              
+              <div class="card stat-card">
+                <small>VOLATILITY</small>
+                <div class="stat-price">
+                  <span id="volatility">$0.00</span>
+                </div>
+                <div class="stat-change" style="color: #6b7280;">
+                  <span>30-day std deviation</span>
+                </div>
+              </div>
+              
+              <div class="card stat-card">
+                <small>AVERAGE</small>
+                <div class="stat-price">
+                  <span id="average-price">$0.00</span>
+                  <span class="stat-unit">USD/bbl</span>
+                </div>
+                <div class="stat-change" style="color: #6b7280;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/>
+                    <path d="m19 9-5 5-4-4-3 3"/>
+                  </svg>
+                  <span>30-day average</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Oil Price Chart -->
+            <div class="card animate-fade-in" style="margin-top: 1.5rem;">
+              <div class="card-header">
+                <h2 class="card-title" id="oil-chart-title">Oil Prices</h2>
+              </div>
+              <div class="card-content">
+                <div id="oil-chart" class="chart-container"></div>
+              </div>
+            </div>
+            
+            <!-- FX Rates Chart -->
+            <div class="card animate-fade-in" style="margin-top: 1.5rem;">
+              <div class="card-header">
+                <h2 class="card-title" id="fx-chart-title">FX Rates</h2>
+              </div>
+              <div class="card-content">
+                <div id="fx-chart" class="chart-container"></div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tab Content: Analysis -->
+          <div id="analysis-tab" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Price Analysis</h2>
+              </div>
+              <div class="card-content">
+                <p style="color: #6b7280; margin-bottom: 1rem;">
+                  Detailed price analysis coming soon. This section will contain advanced analytics, trends, and forecasts based on historical data and market indicators.
+                </p>
+                <div style="width: 100%; height: 300px; background-color: #f3f4f6; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                  <p style="color: #6b7280;">Advanced analysis dashboard coming soon</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tab Content: Chat -->
+          <div id="chat-tab" class="tab-content">
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Ask precise questions about market data</h2>
+              </div>
+              <div class="card-content">
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="chat-container">
+                  <div class="chat-message">
+                    <div class="chat-role">System</div>
+                    <div class="chat-content">
+                      Welcome to MiView Dashboard. Ask precise questions about current market data and trends for accurate, detailed information.
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Response Stats (hidden by default) -->
+                <div id="response-stats-container" style="display: none; margin-top: 1rem;">
+                  <div id="date-range-display" style="background-color: #f3f4f6; padding: 0.5rem; border-radius: 0.375rem; text-align: center; margin-bottom: 0.75rem; font-size: 0.75rem; color: #6b7280;"></div>
+                  
+                  <div class="grid mini-stats-grid" style="gap: 0.75rem;">
+                    <div class="mini-card blue-card">
+                      <h4>CURRENT</h4>
+                      <p id="resp-current-price">$0.00</p>
+                      <small>USD/bbl</small>
+                    </div>
+                    
+                    <div class="mini-card green-card">
+                      <h4>MIN</h4>
+                      <p id="resp-min-price">$0.00</p>
+                      <small>USD/bbl</small>
+                    </div>
+                    
+                    <div class="mini-card red-card">
+                      <h4>MAX</h4>
+                      <p id="resp-max-price">$0.00</p>
+                      <small>USD/bbl</small>
+                    </div>
+                    
+                    <div class="mini-card purple-card">
+                      <h4>CHANGE</h4>
+                      <p id="resp-price-change">0.00%</p>
+                      <small>Period</small>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Retail Price Card (hidden by default) -->
+                <div id="retail-price-container" style="display: none; background-color: #fffbeb; padding: 1rem; border-radius: 0.5rem; margin-top: 1rem;">
+                  <h3 style="font-size: 0.875rem; font-weight: 600; color: #92400e; margin: 0 0 0.5rem 0;">ESTIMATED RETAIL PRICE</h3>
+                  <div style="font-size: 1.5rem; font-weight: 600; color: #78350f;" id="retail-price-display">$0.00</div>
+                  <div style="margin-top: 0.25rem; font-size: 0.875rem; color: #92400e;" id="retail-price-details"></div>
+                </div>
+                
+                <!-- Response Chart (hidden by default) -->
+                <div id="response-chart" class="chart-container" style="display: none; margin-top: 1rem;"></div>
+                <div id="response-chart-subtitle" style="text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem; display: none;"></div>
+                
+                <!-- Chat Input -->
+                <div style="margin-top: 1rem;" class="chat-input">
+                  <input
+                    id="user-message-input"
+                    type="text"
+                    placeholder="Ask a precise question about oil prices, FX rates, or market trends..."
+                    class="input"
+                  >
+                  <button 
+                    id="send-message-btn" 
+                    class="button button-primary"
+                    disabled
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the application
+        const app = {
+          // State
+          loading: true,
+          oilData: null,
+          fxData: null,
+          oilStats: null,
+          chatMessages: [
+            { role: 'System', content: 'Welcome to MiView Dashboard. Ask precise questions about current market data and trends for accurate, detailed information.' }
+          ],
+          userMessage: '',
+          thinking: false,
+          responseStats: null,
+          retailPrice: null,
+          dateRange: null,
+          
+          // DOM elements
+          elements: {
+            loadingContainer: document.getElementById('loading-container'),
+            dashboardContent: document.getElementById('dashboard-content'),
+            currentDate: document.getElementById('current-date'),
+            refreshBtn: document.getElementById('refresh-btn'),
+            tabButtons: document.querySelectorAll('.tab-button'),
+            tabContents: document.querySelectorAll('.tab-content'),
+            currentPrice: document.getElementById('current-price'),
+            priceChange: document.getElementById('price-change'),
+            priceRange: document.getElementById('price-range'),
+            volatility: document.getElementById('volatility'),
+            averagePrice: document.getElementById('average-price'),
+            oilChartTitle: document.getElementById('oil-chart-title'),
+            fxChartTitle: document.getElementById('fx-chart-title'),
+            oilChart: document.getElementById('oil-chart'),
+            fxChart: document.getElementById('fx-chart'),
+            chatMessages: document.getElementById('chat-messages'),
+            userMessageInput: document.getElementById('user-message-input'),
+            sendMessageBtn: document.getElementById('send-message-btn'),
+            responseStatsContainer: document.getElementById('response-stats-container'),
+            dateRangeDisplay: document.getElementById('date-range-display'),
+            respCurrentPrice: document.getElementById('resp-current-price'),
+            respMinPrice: document.getElementById('resp-min-price'),
+            respMaxPrice: document.getElementById('resp-max-price'),
+            respPriceChange: document.getElementById('resp-price-change'),
+            retailPriceContainer: document.getElementById('retail-price-container'),
+            retailPriceDisplay: document.getElementById('retail-price-display'),
+            retailPriceDetails: document.getElementById('retail-price-details'),
+            responseChart: document.getElementById('response-chart'),
+            responseChartSubtitle: document.getElementById('response-chart-subtitle')
+          },
+          
+          // Initialize the application
+          init: function() {
+            this.updateDateTime();
+            this.bindEvents();
+            this.loadDashboardData();
+          },
+          
+          // Update the date and time display
+          updateDateTime: function() {
+            const options = { 
+              year: 'numeric', 
+              month: 'short', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            };
+            const formattedDate = new Date().toLocaleString(undefined, options);
+            this.elements.currentDate.textContent = formattedDate;
+          },
+          
+          // Bind event listeners
+          bindEvents: function() {
+            // Tab navigation
+            this.elements.tabButtons.forEach(button => {
+              button.addEventListener('click', () => {
+                const tab = button.getAttribute('data-tab');
+                this.switchTab(tab);
+              });
+            });
+            
+            // Refresh button
+            this.elements.refreshBtn.addEventListener('click', () => {
+              this.loadDashboardData();
+            });
+            
+            // Chat input
+            this.elements.userMessageInput.addEventListener('input', (e) => {
+              this.userMessage = e.target.value;
+              this.elements.sendMessageBtn.disabled = !this.userMessage.trim() || this.thinking;
+            });
+            
+            this.elements.userMessageInput.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' && this.userMessage.trim() && !this.thinking) {
+                this.sendMessage();
+              }
+            });
+            
+            this.elements.sendMessageBtn.addEventListener('click', () => {
+              if (this.userMessage.trim() && !this.thinking) {
+                this.sendMessage();
+              }
+            });
+          },
+          
+          // Switch between tabs
+          switchTab: function(tabId) {
+            // Update tab buttons
+            this.elements.tabButtons.forEach(button => {
+              if (button.getAttribute('data-tab') === tabId) {
+                button.classList.add('active');
+              } else {
+                button.classList.remove('active');
+              }
+            });
+            
+            // Update tab contents
+            this.elements.tabContents.forEach(content => {
+              if (content.id === tabId + '-tab') {
+                content.classList.add('active');
+              } else {
+                content.classList.remove('active');
+              }
+            });
+          },
+          
+          // Load dashboard data
+          loadDashboardData: async function() {
+            this.loading = true;
+            this.elements.loadingContainer.style.display = 'flex';
+            this.elements.dashboardContent.style.display = 'none';
+            
+            try {
+              // Simulate API call with a delay
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              
+              // Mock data for demonstration
+              const data = {
+                oil_data: {
+                  title: "Brent Crude Oil Prices (Last 30 Days)",
+                  dates: this.generateDates(30),
+                  values: this.generatePriceData(30, 75, 85),
+                  stats: {
+                    min: 76.23,
+                    max: 84.56,
+                    mean: 80.45,
+                    end_price: 82.75,
+                    volatility: 2.15,
+                    percent_change: 3.64
+                  }
+                },
+                fx_data: {
+                  title: "Major Currency Exchange Rates vs USD",
+                  currencies: ["EUR", "GBP", "JPY", "CAD", "AUD", "CHF", "CNY"],
+                  rates: [1.08, 1.26, 0.0073, 0.74, 0.67, 1.12, 0.14]
+                }
+              };
+              
+              this.oilData = data.oil_data;
+              this.fxData = data.fx_data;
+              this.oilStats = data.oil_data.stats;
+              
+              // Update UI with data
+              this.updateDashboardUI();
+              
+              // Show dashboard content
+              this.loading = false;
+              this.elements.loadingContainer.style.display = 'none';
+              this.elements.dashboardContent.style.display = 'block';
+              
+              // Show success message
+              this.showNotification('Dashboard data loaded successfully', 'success');
+            } catch (err) {
+              console.error("Error loading dashboard data:", err);
+              this.showNotification('Failed to load dashboard data', 'error');
+            }
+          },
+          
+          // Update the dashboard UI with data
+          updateDashboardUI: function() {
+            if (!this.oilStats) return;
+            
+            // Update stats cards
+            this.elements.currentPrice.textContent = '$' + this.oilStats.end_price.toFixed(2);
+            this.elements.priceRange.textContent = '$' + this.oilStats.min.toFixed(2) + ' - $' + this.oilStats.max.toFixed(2);
+            this.elements.volatility.textContent = '$' + this.oilStats.volatility.toFixed(2);
+            this.elements.averagePrice.textContent = '$' + this.oilStats.mean.toFixed(2);
+            
+            // Update price change with arrow
+            const changeEl = this.elements.priceChange;
+            const changeArrow = changeEl.querySelector('svg');
+            const changeText = changeEl.querySelector('span');
+            
+            changeText.textContent = (this.oilStats.percent_change > 0 ? '+' : '') + this.oilStats.percent_change.toFixed(2) + '%';
+            
+            if (this.oilStats.percent_change > 0) {
+              changeText.className = 'up';
+              changeArrow.outerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="up">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                <polyline points="16 7 22 7 22 13"></polyline>
+              </svg>`;
+            } else {
+              changeText.className = 'down';
+              changeArrow.outerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="down">
+                <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"></polyline>
+                <polyline points="16 17 22 17 22 11"></polyline>
+              </svg>`;
+            }
+            
+            // Update chart titles
+            this.elements.oilChartTitle.textContent = this.oilData.title;
+            this.elements.fxChartTitle.textContent = this.fxData.title;
+            
+            // Render charts
+            this.renderOilChart();
+            this.renderFxChart();
+          },
+          
+          // Render oil price chart
+          renderOilChart: function() {
+            if (!this.oilData) return;
+            
+            // Create line trace for prices
+            const trace = {
+              x: this.oilData.dates,
+              y: this.oilData.values,
+              mode: 'lines+markers',
+              name: 'Brent Oil (USD/bbl)',
+              line: { color: '#2563eb', width: 2 },
+              marker: { size: 6 }
+            };
+            
+            let shapes = [];
+            
+            if (this.oilStats) {
+              // Add a horizontal line at the average price
+              shapes.push({
+                type: 'line',
+                x0: this.oilData.dates[0],
+                y0: this.oilStats.mean,
+                x1: this.oilData.dates[this.oilData.dates.length - 1],
+                y1: this.oilStats.mean,
+                line: {
+                  color: 'rgba(22, 163, 74, 0.5)',
+                  width: 1,
+                  dash: 'dash'
+                }
+              });
+              
+              // Add annotation for the average
+              const annotations = [{
+                x: this.oilData.dates[this.oilData.dates.length - 1],
+                y: this.oilStats.mean,
+                xref: 'x',
+                yref: 'y',
+                text: 'Avg: $' + this.oilStats.mean.toFixed(2),
+                showarrow: true,
+                arrowhead: 0,
+                ax: 40,
+                ay: 0,
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                bordercolor: 'rgba(22, 163, 74, 0.5)',
+                borderwidth: 1,
+                font: { size: 10 }
+              }];
+              
+              const layout = {
+                title: this.oilData.title,
+                xaxis: { 
+                  title: 'Date',
+                  gridcolor: 'rgba(0,0,0,0.05)'
+                },
+                yaxis: { 
+                  title: 'Price (USD/bbl)',
+                  range: [this.oilStats.min * 0.95, this.oilStats.max * 1.05],
+                  gridcolor: 'rgba(0,0,0,0.05)'
+                },
+                template: 'plotly_white',
+                height: 400,
+                margin: { l: 50, r: 20, b: 50, t: 80 },
+                hovermode: 'x unified',
+                shapes: shapes,
+                annotations: annotations,
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)'
+              };
+              
+              Plotly.newPlot(this.elements.oilChart, [trace], layout, { responsive: true });
+            } else {
+              // Basic layout without statistics
+              const layout = {
+                title: this.oilData.title,
+                xaxis: { 
+                  title: 'Date',
+                  gridcolor: 'rgba(0,0,0,0.05)'
+                },
+                yaxis: { 
+                  title: 'Price (USD/bbl)',
+                  gridcolor: 'rgba(0,0,0,0.05)'
+                },
+                template: 'plotly_white',
+                height: 400,
+                margin: { l: 50, r: 20, b: 50, t: 80 },
+                hovermode: 'x unified',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)'
+              };
+              
+              Plotly.newPlot(this.elements.oilChart, [trace], layout, { responsive: true });
+            }
+          },
+          
+          // Render FX rates chart
+          renderFxChart: function() {
+            if (!this.fxData) return;
+            
+            const trace = {
+              x: this.fxData.currencies,
+              y: this.fxData.rates,
+              type: 'bar',
+              marker: { 
+                color: '#16a34a',
+                opacity: 0.8,
+                line: {
+                  color: 'rgb(8, 48, 107)',
+                  width: 1.5
+                }
+              }
+            };
+
+            const layout = {
+              title: this.fxData.title,
+              xaxis: { 
+                title: 'Currency',
+                gridcolor: 'rgba(0,0,0,0.05)'
+              },
+              yaxis: { 
+                title: 'Rate vs USD',
+                gridcolor: 'rgba(0,0,0,0.05)'
+              },
+              template: 'plotly_white',
+              height: 400,
+              margin: { l: 50, r: 20, b: 50, t: 80 },
+              plot_bgcolor: 'rgba(0,0,0,0)',
+              paper_bgcolor: 'rgba(0,0,0,0)'
+            };
+
+            Plotly.newPlot(this.elements.fxChart, [trace], layout, { responsive: true });
+          },
+          
+          // Send a message in the chat interface
+          sendMessage: async function() {
+            const userMsg = this.userMessage.trim();
+            if (!userMsg || this.thinking) return;
+            
+            // Add user message to chat
+            this.addChatMessage('You', userMsg);
+            
+            // Clear input and disable button
+            this.userMessage = '';
+            this.elements.userMessageInput.value = '';
+            this.elements.sendMessageBtn.disabled = true;
+            
+            // Show thinking state
+            this.thinking = true;
+            this.addThinkingIndicator();
+            
+            // Clear previous response data
+            this.responseStats = null;
+            this.retailPrice = null;
+            this.dateRange = null;
+            this.elements.responseStatsContainer.style.display = 'none';
+            this.elements.retailPriceContainer.style.display = 'none';
+            this.elements.responseChart.style.display = 'none';
+            this.elements.responseChartSubtitle.style.display = 'none';
+            
+            // Scroll to bottom of chat
+            this.scrollToBottom();
+            
+            try {
+              // Simulate API call with a delay
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              
+              // Mock response data
+              const mockResponse = this.generateMockResponse(userMsg);
+              
+              let formattedResponse = mockResponse.text;
+              
+              // Add latest price if available
+              if (mockResponse.latest_price) {
+                formattedResponse += `<br><br><strong>Latest Oil Price:</strong> $${mockResponse.latest_price.value} USD/bbl (${mockResponse.latest_price.date})`;
+              }
+              
+              // Add date range if available
+              if (mockResponse.parameters && (mockResponse.parameters.start_date || mockResponse.parameters.end_date)) {
+                const startDate = mockResponse.parameters.start_date || 'unknown';
+                const endDate = mockResponse.parameters.end_date || 'present';
+                this.dateRange = `${startDate} to ${endDate}`;
+                this.elements.dateRangeDisplay.textContent = `Data Range: ${this.dateRange}`;
+              }
+              
+              // Remove thinking indicator
+              this.removeThinkingIndicator();
+              
+              // Add assistant message to chat
+              this.addChatMessage('Assistant', formattedResponse);
+              
+              // Set response stats if available
+              if (mockResponse.oil_data && mockResponse.oil_data.stats) {
+                this.responseStats = mockResponse.oil_data.stats;
+                this.updateResponseStats();
+              }
+              
+              // Set retail price information if available
+              if (mockResponse.retail_price) {
+                this.retailPrice = mockResponse.retail_price;
+                this.updateRetailPrice();
+              }
+              
+              // Render chart if data available
+              if (mockResponse.chart_data) {
+                // Pass date range to chart data if available
+                if (this.dateRange && !mockResponse.chart_data.date_range) {
+                  mockResponse.chart_data.date_range = this.dateRange;
+                }
+                
+                this.renderResponseChart(mockResponse.chart_data, mockResponse.oil_data?.stats);
+              }
+              
+              this.showNotification('Response received', 'success');
+              
+            } catch (error) {
+              console.error('Error sending message:', error);
+              
+              // Remove thinking indicator
+              this.removeThinkingIndicator();
+              
+              // Add error message to chat
+              this.addChatMessage('System', 'Sorry, there was an error processing your request. Please try again.');
+              
+              this.showNotification('Failed to process your request', 'error');
+            } finally {
+              this.thinking = false;
+              this.scrollToBottom();
+            }
+          },
+          
+          // Add a message to the chat interface
+          addChatMessage: function(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message animate-fade-in';
+            
+            const roleDiv = document.createElement('div');
+            roleDiv.className = 'chat-role';
+            roleDiv.textContent = role;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'chat-content';
+            contentDiv.innerHTML = content;
+            
+            messageDiv.appendChild(roleDiv);
+            messageDiv.appendChild(contentDiv);
+            
+            this.elements.chatMessages.appendChild(messageDiv);
+            this.chatMessages.push({ role, content });
+          },
+          
+          // Add thinking indicator to chat
+          addThinkingIndicator: function() {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.id = 'thinking-indicator';
+            thinkingDiv.className = 'chat-message animate-fade-in';
+            thinkingDiv.style.display = 'flex';
+            thinkingDiv.style.alignItems = 'center';
+            thinkingDiv.innerHTML = `
+              <div class="loading-spinner" style="width: 16px; height: 16px; margin-right: 0.5rem;"></div>
+              <span style="color: #6b7280;">Thinking...</span>
+            `;
+            
+            this.elements.chatMessages.appendChild(thinkingDiv);
+          },
+          
+          // Remove thinking indicator from chat
+          removeThinkingIndicator: function() {
+            const thinkingIndicator = document.getElementById('thinking-indicator');
+            if (thinkingIndicator) {
+              thinkingIndicator.remove();
+            }
+          },
+          
+          // Scroll chat to bottom
+          scrollToBottom: function() {
+            this.elements.chatMessages.scrollTop = this.elements.chatMessages.scrollHeight;
+          },
+          
+          // Update response stats UI
+          updateResponseStats: function() {
+            if (!this.responseStats) return;
+            
+            this.elements.respCurrentPrice.textContent = '$' + this.responseStats.end_price.toFixed(2);
+            this.elements.respMinPrice.textContent = '$' + this.responseStats.min.toFixed(2);
+            this.elements.respMaxPrice.textContent = '$' + this.responseStats.max.toFixed(2);
+            
+            const changeText = (this.responseStats.percent_change > 0 ? '+' : '') + this.responseStats.percent_change.toFixed(2) + '%';
+            this.elements.respPriceChange.textContent = changeText;
+            this.elements.respPriceChange.className = this.responseStats.percent_change > 0 ? 'up' : 'down';
+            
+            this.elements.responseStatsContainer.style.display = 'block';
+          },
+          
+          // Update retail price UI
+          updateRetailPrice: function() {
+            if (!this.retailPrice) return;
+            
+            let price = this.retailPrice.price;
+            let unit = this.retailPrice.unit;
+            let formattedPrice = '';
+            
+            // Format based on currency
+            if (unit.startsWith('€')) {
+              formattedPrice = `€${price.toFixed(2)} ${unit.substring(2)}`;
+            } else if (unit.startsWith('£')) {
+              formattedPrice = `£${price.toFixed(2)} ${unit.substring(2)}`;
+            } else if (unit.startsWith('$')) {
+              formattedPrice = `$${price.toFixed(2)} ${unit.substring(2)}`;
+            } else {
+              formattedPrice = `${price.toFixed(2)} ${unit}`;
+            }
+            
+            this.elements.retailPriceDisplay.textContent = formattedPrice;
+            this.elements.retailPriceDetails.textContent = 
+              `${this.retailPrice.country} • ${this.retailPrice.common_fuel} • ` +
+              `Includes ${this.retailPrice.tax_rate}% tax and ${this.retailPrice.vat}% VAT`;
+              
+            this.elements.retailPriceContainer.style.display = 'block';
+          },
+          
+          // Render response chart
+          renderResponseChart: function(chartData, stats) {
+            if (!chartData) return;
+            
+            const trace = {
+              x: chartData.dates,
+              y: chartData.values,
+              mode: 'lines+markers',
+              name: chartData.title || 'Brent Oil Prices',
+              line: { color: '#16a34a', width: 2 },
+              marker: { size: 6 }
+            };
+            
+            // Include date range in title if available
+            let chartTitle = chartData.title || 'Brent Crude Oil Prices';
+            if (chartData.date_range) {
+              chartTitle = `${chartTitle} (${chartData.date_range})`;
+            }
+            
+            let layout = {
+              title: {
+                text: chartTitle,
+                font: { size: 16 },
+                y: 0.95,
+                yanchor: 'top'
+              },
+              xaxis: { 
+                title: 'Date',
+                gridcolor: 'rgba(0,0,0,0.05)'
+              },
+              yaxis: { 
+                title: 'Price (USD/bbl)',
+                gridcolor: 'rgba(0,0,0,0.05)'
+              },
+              template: 'plotly_white',
+              height: 350,
+              margin: { l: 50, r: 20, b: 80, t: 100 },
+              hovermode: 'x unified',
+              plot_bgcolor: 'rgba(0,0,0,0)',
+              paper_bgcolor: 'rgba(0,0,0,0)'
+            };
+            
+            if (stats) {
+              // Create a shapes array for the layout
+              layout.shapes = [{
+                type: 'line',
+                x0: chartData.dates[0],
+                y0: stats.mean,
+                x1: chartData.dates[chartData.dates.length - 1],
+                y1: stats.mean,
+                line: {
+                  color: 'rgba(22, 163, 74, 0.5)',
+                  width: 1,
+                  dash: 'dash'
+                }
+              }];
+              
+              // Create annotations array
+              layout.annotations = [{
+                x: chartData.dates[chartData.dates.length - 1],
+                y: stats.mean,
+                xref: 'x',
+                yref: 'y',
+                text: 'Avg: $' + stats.mean.toFixed(2),
+                showarrow: true,
+                arrowhead: 0,
+                ax: 40,
+                ay: 0,
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                bordercolor: 'rgba(22, 163, 74, 0.5)',
+                borderwidth: 1,
+                font: { size: 10 }
+              }];
+              
+              // Set y-axis range
+              if (!layout.yaxis) layout.yaxis = {};
+              layout.yaxis.range = [stats.min * 0.95, stats.max * 1.05];
+            }
+            
+            this.elements.responseChart.style.display = 'block';
+            Plotly.newPlot(this.elements.responseChart, [trace], layout, { responsive: true });
+            
+            // Display subtitle if date range exists
+            if (chartData.date_range) {
+              this.elements.responseChartSubtitle.textContent = chartData.date_range;
+              this.elements.responseChartSubtitle.style.display = 'block';
+            }
+          },
+          
+          // Show a notification tooltip
+          showNotification: function(message, type) {
+            // Create notification container if it doesn't exist
+            let notificationContainer = document.getElementById('notification-container');
+            if (!notificationContainer) {
+              notificationContainer = document.createElement('div');
+              notificationContainer.id = 'notification-container';
+              notificationContainer.style.cssText = `
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                z-index: 9999;
+              `;
+              document.body.appendChild(notificationContainer);
+            }
+            
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              background-color: white;
+              border-left: 4px solid ${type === 'success' ? '#16a34a' : '#dc2626'};
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+              border-radius: 0.375rem;
+              padding: 1rem;
+              margin-bottom: 0.5rem;
+              opacity: 0;
+              transform: translateX(100%);
+              transition: all 0.3s ease;
+            `;
+            
+            notification.innerHTML = `
+              <div style="display: flex; align-items: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: ${type === 'success' ? '#16a34a' : '#dc2626'}; margin-right: 0.5rem;">
+                  ${type === 'success' 
+                    ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>'
+                    : '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>'
+                  }
+                </svg>
+                <span>${message}</span>
+              </div>
+            `;
+            
+            // Add to container
+            notificationContainer.appendChild(notification);
+            
+            // Trigger animation
+            setTimeout(() => {
+              notification.style.opacity = '1';
+              notification.style.transform = 'translateX(0)';
+            }, 10);
+            
+            // Remove after a delay
+            setTimeout(() => {
+              notification.style.opacity = '0';
+              notification.style.transform = 'translateX(100%)';
+              
+              setTimeout(() => {
+                notification.remove();
+              }, 300);
+            }, 3000);
+          },
+          
+          // Helper: Generate dates
+          generateDates: function(days) {
+            const dates = [];
+            const today = new Date();
+            
+            for (let i = days - 1; i >= 0; i--) {
+              const date = new Date();
+              date.setDate(today.getDate() - i);
+              dates.push(date.toISOString().split('T')[0]);
+            }
+            
+            return dates;
+          },
+          
+          // Helper: Generate realistic price data
+          generatePriceData: function(days, basePrice, maxPrice) {
+            const values = [];
+            let price = basePrice;
+            
+            for (let i = 0; i < days; i++) {
+              // Random walk with slight upward bias
+              const change = (Math.random() - 0.45) * 2;
+              price = Math.max(basePrice - 10, Math.min(maxPrice, price + change));
+              values.push(Number(price.toFixed(2)));
+            }
+            
+            return values;
+          },
+          
+          // Generate a mock response based on the user message
+          generateMockResponse: function(message) {
+            const lowerMsg = message.toLowerCase();
+            
+            let response = {
+              text: "I don't have specific data on that query. Please ask about oil prices, currency exchange rates, or market trends."
+            };
+            
+            if (lowerMsg.includes('oil') || lowerMsg.includes('price') || lowerMsg.includes('brent') || lowerMsg.includes('crude')) {
+              const days = lowerMsg.includes('week') ? 7 : lowerMsg.includes('year') ? 365 : 30;
+              const dates = [];
+              const values = [];
+              let price = 78 + Math.random() * 5;
+              
+              // Generate dates and price data
+              for (let i = days; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(date.toISOString().split('T')[0]);
+                
+                // Random walk with bias based on message
+                const bias = lowerMsg.includes('increas') || lowerMsg.includes('rise') ? 0.1 : 
+                          lowerMsg.includes('decreas') || lowerMsg.includes('fall') ? -0.1 : 0;
+                
+                price += (Math.random() - 0.45 + bias) * 2;
+                price = Math.max(70, Math.min(90, price));
+                values.push(Number(price.toFixed(2)));
+              }
+              
+              // Calculate stats
+              const min = Math.min(...values);
+              const max = Math.max(...values);
+              const mean = values.reduce((a, b) => a + b, 0) / values.length;
+              const end_price = values[values.length - 1];
+              const start_price = values[0];
+              const percent_change = ((end_price - start_price) / start_price * 100).toFixed(2);
+              
+              // Generate volatility (standard deviation)
+              const volatility = Math.sqrt(
+                values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+              ).toFixed(2);
+              
+              // Prepare response
+              let timeframe = lowerMsg.includes('week') ? 'week' : lowerMsg.includes('year') ? 'year' : 'month';
+              response = {
+                text: `Over the past ${timeframe}, Brent crude oil prices have ${percent_change > 0 ? 'increased' : 'decreased'} by ${Math.abs(Number(percent_change))}%. The current price is $${end_price.toFixed(2)} per barrel, with prices ranging from $${min.toFixed(2)} to $${max.toFixed(2)}.`,
+                latest_price: {
+                  value: end_price.toFixed(2),
+                  date: dates[dates.length - 1]
+                },
+                oil_data: {
+                  stats: {
+                    min,
+                    max,
+                    mean,
+                    end_price,
+                    volatility: Number(volatility),
+                    percent_change: Number(percent_change)
+                  }
+                },
+                chart_data: {
+                  title: `Brent Crude Oil Prices - Last ${days} Days`,
+                  dates,
+                  values
+                },
+                parameters: {
+                  start_date: dates[0],
+                  end_date: dates[dates.length - 1]
+                }
+              };
+              
+              if (lowerMsg.includes('retail') || lowerMsg.includes('pump') || lowerMsg.includes('gas')) {
+                response.retail_price = {
+                  country: "United States",
+                  common_fuel: "Regular Gasoline",
+                  price: end_price * 0.025 + 0.5, // Simple conversion from crude to retail
+                  unit: "$/gallon",
+                  tax_rate: 18.4,
+                  vat: 6.5
+                };
+              }
+            } else if (lowerMsg.includes('currency') || lowerMsg.includes('forex') || lowerMsg.includes('exchange') || lowerMsg.includes('fx')) {
+              response.text = "The current major currency exchange rates against USD are: EUR/USD: 1.08, GBP/USD: 1.26, USD/JPY: 137.5, USD/CAD: 1.35, AUD/USD: 0.67. The Euro has strengthened against the US Dollar by 0.8% this week, while the British Pound has weakened by 0.3%.";
+            }
+            
+            return response;
+          }
+        };
+        
+        // Initialize the application
+        app.init();
+      });
+    </script>
+  </body>
+</html>
